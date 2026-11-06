@@ -146,6 +146,17 @@ climate:
     use_fahrenheit: true
     sensor: ha_temperature_sensor
 
+# Protocol-specific transmission action. Override or replace this script to
+# support other mini-split brands or transports (e.g., midea_ac.follow_me).
+script:
+  - id: send_follow_me_temp
+    parameters:
+      adjusted_temp_f: float
+    then:
+      - remote_transmitter.transmit_midea:
+          code: !lambda |-
+            return midea_follow_me_code(adjusted_temp_f);
+
 interval:
   - interval: ${follow_me_interval}
     then:
@@ -153,30 +164,29 @@ interval:
           condition:
             switch.is_on: follow_me
           then:
-            - remote_transmitter.transmit_midea:
-                code: !lambda |-
-                  auto opt = id(room_size_profile).active_index();
-                  int room_size_idx = opt.has_value() ? opt.value() : 1;
+            - lambda: |-
+                auto opt = id(room_size_profile).active_index();
+                int room_size_idx = opt.has_value() ? opt.value() : 1;
 
-                  float out_k = 0.0f, out_adj = 0.0f;
-                  float adjusted_temp = get_compensated_temp(
-                      id(ha_temperature_sensor).state, // Current temp. in Celsius
-                      id(thermostat_ir).target_temperature, // Target temp. in Celsius
-                      id(compensation_speedup).state, // Temp. correction speed
-                      room_size_idx, // Room size profile selection
-                      &out_k,
-                      &out_adj
-                  );
+                float out_k = 0.0f, out_adj = 0.0f;
+                float adjusted_temp = get_compensated_temp(
+                    id(ha_temperature_sensor).state, // Current temp. in Celsius
+                    id(thermostat_ir).target_temperature, // Target temp. in Celsius
+                    id(compensation_speedup).state, // Temp. correction speed
+                    room_size_idx, // Room size profile selection
+                    &out_k,
+                    &out_adj
+                );
 
-                  if (isnan(adjusted_temp)) {
-                    ESP_LOGI("follow.me", "Sensors not ready — skipping IR transmission.");
-                    return {};
-                  }
+                if (isnan(adjusted_temp)) {
+                  ESP_LOGI("follow.me", "Sensors not ready — skipping IR transmission.");
+                  return;
+                }
 
-                  // Publish back to Home Assistant sensors
-                  id(follow_me_k_filtered).publish_state(out_k);
-                  id(follow_me_adjusted_temp).publish_state(out_adj);
-                  return midea_follow_me_code(adjusted_temp);
+                // Publish back to Home Assistant sensors
+                id(follow_me_k_filtered).publish_state(out_k);
+                id(follow_me_adjusted_temp).publish_state(out_adj);
+                id(send_follow_me_temp).execute(adjusted_temp);
 
           else:
             - logger.log: "Follow Me is disabled; skipping IR transmission."
