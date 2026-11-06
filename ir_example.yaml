@@ -4,6 +4,11 @@ substitutions:
   temperature_sensor: sensor.example_room_temperature
   # Optional: override the Follow Me transmission interval (default: "10s")
   # follow_me_interval: "10s"
+  # Optional: override board and IR transceiver pins (defaults shown below)
+  # board: esp01_1m
+  # ir_tx_pin: GPIO4
+  # ir_rx_pin: GPIO5
+  # ir_rx_inverted: "true"
   # Optional: use local components/ folder when developing locally instead of fetching from GitHub
   # external_components_source: components
 

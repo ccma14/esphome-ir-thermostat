@@ -1,5 +1,9 @@
 substitutions:
   follow_me_interval: "10s"  # override per-device if needed
+  board: esp01_1m
+  ir_tx_pin: GPIO4
+  ir_rx_pin: GPIO5
+  ir_rx_inverted: "true"
   github_ref: main
   external_components_source: github://ccma14/esphome-ir-thermostat@${github_ref}
 
@@ -14,7 +18,7 @@ external_components:
 ir_thermostat:
 
 esp8266:
-  board: esp01_1m
+  board: ${board}
 
 # Enable logging
 logger:
@@ -47,7 +51,7 @@ web_server:
 
 remote_transmitter:
   - id: transmitter_ir
-    pin: GPIO4
+    pin: ${ir_tx_pin}
     carrier_duty_percent: 50%
 
 remote_receiver:
@@ -55,8 +59,8 @@ remote_receiver:
   # for details on discovering the correct codes for your devices
   - id: receiver_ir
     pin:
-      number: GPIO5
-      inverted: True
+      number: ${ir_rx_pin}
+      inverted: ${ir_rx_inverted}
     dump: all
     #dump: raw
 
