@@ -5,7 +5,6 @@ substitutions:
   ir_rx_pin: GPIO5
   ir_rx_inverted: "true"
   use_fahrenheit: "true"
-  temperature_unit: "°F"
   github_ref: main
   external_components_source: github://ccma14/esphome-ir-thermostat@${github_ref}
 
@@ -100,14 +99,14 @@ sensor:
   - platform: template
     name: "Adjusted Temperature"
     id: follow_me_adjusted_temp
-    unit_of_measurement: ${temperature_unit}
+    unit_of_measurement: ${ "°F" if (use_fahrenheit | string | lower == "true") else "°C" }
     accuracy_decimals: 2
 
   - platform: homeassistant
     name: "Thermostat"
     entity_id: ${temperature_sensor}
     id: ha_temperature_sensor
-    unit_of_measurement: ${temperature_unit}
+    unit_of_measurement: ${ "°F" if (use_fahrenheit | string | lower == "true") else "°C" }
     accuracy_decimals: 1
     internal: True
     filters:

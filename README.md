@@ -107,7 +107,6 @@ packages:
 | `ir_rx_pin` | `GPIO5` | GPIO pin connected to the IR receiver |
 | `ir_rx_inverted` | `"true"` | Whether the IR receiver input is active-low |
 | `use_fahrenheit` | `"true"` | `"true"` for Fahrenheit (`°F`), `"false"` for Celsius (`°C`) |
-| `temperature_unit` | `"°F"` | Unit of measurement (`"°F"` or `"°C"`) matching `use_fahrenheit` |
 
 ---
 

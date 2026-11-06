@@ -9,9 +9,8 @@ substitutions:
   # ir_tx_pin: GPIO4
   # ir_rx_pin: GPIO5
   # ir_rx_inverted: "true"
-  # Optional: use Celsius instead of Fahrenheit (defaults: "true" and "°F")
+  # Optional: use Celsius instead of Fahrenheit (default: "true")
   # use_fahrenheit: "false"
-  # temperature_unit: "°C"
   # Optional: use local components/ folder when developing locally instead of fetching from GitHub
   # external_components_source: components
 
