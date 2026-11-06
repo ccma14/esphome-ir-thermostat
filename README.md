@@ -112,5 +112,80 @@ packages:
 
 ## Adapting to Other Mini-Split Brands or Transports
 
-The Follow Me compensation loop calls the `send_follow_me_temp` script (`adjusted_temp_f: float`), keeping the compensation math decoupled from the Midea IR protocol. To use a different transport (e.g., `midea_ac.follow_me` over UART or another IR protocol), override `send_follow_me_temp` in your device YAML.
+The compensation math (`get_compensated_temp()`), room profiles, and Home Assistant tuning entities (`Compensation Speedup`, `Room Size Profile`, `K Filtered`, `Adjusted Temperature`) are completely decoupled from the Midea IR protocol.
+
+Only three sections in [`common/ir_thermostat.yaml`](common/ir_thermostat.yaml) are Midea-specific:
+
+1. **The `climate:` platform** (`platform: midea_ir`, `id: thermostat_ir`):
+   ESPHome provides built-in `climate_ir` platforms for many brands (`coolix`, `daikin`, `fujitsu_general`, `gree`, `hitachi_ac344`, `lg`, `mitsubishi`, `panasonic`, `samsung`, `toshiba`, `whirlpool`, etc.). All inherit from ESPHome's base `Climate` class, so `id(thermostat_ir).target_temperature` works identically across every brand.
+2. **The `send_follow_me_temp` script** (`parameters: { adjusted_temp_f: float }`):
+   Called every `follow_me_interval` with the compensated temperature in `°F`.
+3. **The optional Coolix helper codes** (`Mini-Split LED Toggle` and `Follow Me` ON/OFF switch):
+   For non-Midea/Coolix units, the `Follow Me` switch acts as a software enable/disable toggle for the periodic compensation loop.
+
+---
+
+### Case A: Another IR Mini-Split with "Follow Me" / "I Feel" (e.g., Gree, Whirlpool, Electrolux)
+
+Many brands (such as Gree's **"I Feel"** or Whirlpool's **"6th Sense"**) periodically transmit an IR packet containing the room temperature measured at the remote.
+
+1. **Capture the IR frame**: Point your original remote (with "I Feel" / "Follow Me" enabled) at the ESP's IR receiver (`ir_rx_pin`). Because `remote_receiver:` is configured with `dump: all`, ESPHome's logs will print the protocol and byte payload.
+2. **Override `climate:` and `send_follow_me_temp` in your device YAML** using ESPHome's `!remove` and `!extend` tags (no fork required):
+
+```yaml
+substitutions:
+  name: ir-living-room
+  friendly_name: Living Room Mini-Split
+  temperature_sensor: sensor.living_room_temperature
+
+packages:
+  thermostat:
+    url: https://github.com/ccma14/esphome-ir-thermostat
+    ref: main
+    files: [common/ir_thermostat.yaml]
+
+# 1. Replace midea_ir with your mini-split's ESPHome climate_ir platform
+climate:
+  - id: !remove thermostat_ir
+  - platform: gree
+    id: thermostat_ir
+    name: ${friendly_name}
+    model: generic
+    sensor: ha_temperature_sensor
+
+# 2. Override the Follow Me transmission script for your protocol
+script:
+  - id: !extend send_follow_me_temp
+    then:
+      - remote_transmitter.transmit_pronto:  # or transmit_raw / transmit_nec / etc.
+          data: !lambda |-
+            int temp_c = (int)roundf(f_to_c(adjusted_temp_f));
+            return my_custom_follow_me_pronto(temp_c);
+```
+
+---
+
+### Case B: Midea / Carrier / Pioneer / MrCool Using a UART Dongle (`midea` component)
+
+If your Midea-compatible unit uses a serial UART dongle instead of an IR blaster, ESPHome's `midea` component includes a native `midea_ac.follow_me` action. Override `send_follow_me_temp` to forward the compensated temperature over UART:
+
+```yaml
+script:
+  - id: !extend send_follow_me_temp
+    then:
+      - midea_ac.follow_me:
+          temperature: !lambda |-
+            return f_to_c(adjusted_temp_f);  // midea_ac.follow_me expects Celsius
+          beeper: false
+```
+
+---
+
+### Case C: Mini-Splits Without a "Follow Me" Feature (Daikin, Mitsubishi, Fujitsu, LG)
+
+For mini-splits that always read their internal return-air thermistor and do not support a remote temperature beacon, you can still use `get_compensated_temp()` by **applying the inverse offset to the mini-split's target setpoint**:
+
+- **Follow Me mode (Midea)**: When the room is **68°F** and the target is **70°F**, `get_compensated_temp()` reports a lower "fake" room temperature (e.g., **66°F**) so the unit heats harder.
+- **Setpoint Offset mode (non-Follow-Me units)**: Instead of reporting a fake room temperature, shift the commanded setpoint sent to the mini-split by the inverse offset ($\text{Target} - (\text{Adjusted} - \text{Actual}) = \mathbf{72^\circ\text{F}}$) whenever the rounded integer setpoint changes by $\ge 1^\circ$ (and increase `follow_me_interval` to e.g. `"300s"` so the indoor unit doesn't beep on frequent updates).
+
 
