@@ -4,6 +4,8 @@ substitutions:
   ir_tx_pin: GPIO4
   ir_rx_pin: GPIO5
   ir_rx_inverted: "true"
+  use_fahrenheit: "true"
+  temperature_unit: "°F"
   github_ref: main
   external_components_source: github://ccma14/esphome-ir-thermostat@${github_ref}
 
@@ -98,18 +100,19 @@ sensor:
   - platform: template
     name: "Adjusted Temperature"
     id: follow_me_adjusted_temp
-    unit_of_measurement: "°F"
+    unit_of_measurement: ${temperature_unit}
     accuracy_decimals: 2
 
   - platform: homeassistant
     name: "Thermostat"
     entity_id: ${temperature_sensor}
     id: ha_temperature_sensor
-    unit_of_measurement: "°F"
+    unit_of_measurement: ${temperature_unit}
     accuracy_decimals: 1
     internal: True
     filters:
-      - lambda: return f_to_c(x);  # Convert Fahrenheit to Celsius
+      - lambda: |-
+          return (${use_fahrenheit}) ? f_to_c(x) : x;  // Convert °F to °C when use_fahrenheit is true
 
 button:
   - platform: template
@@ -143,7 +146,7 @@ climate:
   - platform: midea_ir
     id: thermostat_ir
     name: ${friendly_name}
-    use_fahrenheit: true
+    use_fahrenheit: ${use_fahrenheit}
     sensor: ha_temperature_sensor
 
 # Protocol-specific transmission action. Override or replace this script to
@@ -155,7 +158,7 @@ script:
     then:
       - remote_transmitter.transmit_midea:
           code: !lambda |-
-            return midea_follow_me_code(adjusted_temp_f);
+            return midea_follow_me_code(adjusted_temp_f, ${use_fahrenheit});
 
 interval:
   - interval: ${follow_me_interval}
@@ -185,7 +188,7 @@ interval:
 
                 // Publish back to Home Assistant sensors
                 id(follow_me_k_filtered).publish_state(out_k);
-                id(follow_me_adjusted_temp).publish_state(out_adj);
+                id(follow_me_adjusted_temp).publish_state((${use_fahrenheit}) ? out_adj : f_to_c(out_adj));
                 id(send_follow_me_temp).execute(adjusted_temp);
 
           else:

@@ -1,8 +1,10 @@
+# Author: Christian Czezatke (@ccma14)
 from pathlib import Path
 import esphome.config_validation as cv
 from esphome.core import CORE, CoroPriority, coroutine_with_priority
 from esphome.core.config import include_file
 
+CODEOWNERS = ["@ccma14"]
 CONFIG_SCHEMA = cv.Schema({})
 
 
@@ -14,3 +16,4 @@ async def _add_ir_thermostat_header() -> None:
 
 async def to_code(config: dict) -> None:
     CORE.add_job(_add_ir_thermostat_header)
+

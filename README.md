@@ -92,3 +92,26 @@ packages:
     refresh: 1d
 ```
 
+---
+
+## Available Substitutions
+
+| Substitution | Default | Description |
+| :--- | :--- | :--- |
+| `name` | *(required)* | ESPHome node name / hostname |
+| `friendly_name` | *(required)* | Friendly display name in Home Assistant |
+| `temperature_sensor` | *(required)* | Home Assistant temperature sensor entity ID |
+| `follow_me_interval` | `"10s"` | How often the compensated Follow Me temperature is transmitted |
+| `board` | `esp01_1m` | ESP8266 board type (e.g., `esp01_1m`, `d1_mini`, `nodemcuv2`) |
+| `ir_tx_pin` | `GPIO4` | GPIO pin connected to the IR LED transmitter |
+| `ir_rx_pin` | `GPIO5` | GPIO pin connected to the IR receiver |
+| `ir_rx_inverted` | `"true"` | Whether the IR receiver input is active-low |
+| `use_fahrenheit` | `"true"` | `"true"` for Fahrenheit (`°F`), `"false"` for Celsius (`°C`) |
+| `temperature_unit` | `"°F"` | Unit of measurement (`"°F"` or `"°C"`) matching `use_fahrenheit` |
+
+---
+
+## Adapting to Other Mini-Split Brands or Transports
+
+The Follow Me compensation loop calls the `send_follow_me_temp` script (`adjusted_temp_f: float`), keeping the compensation math decoupled from the Midea IR protocol. To use a different transport (e.g., `midea_ac.follow_me` over UART or another IR protocol), override `send_follow_me_temp` in your device YAML.
+

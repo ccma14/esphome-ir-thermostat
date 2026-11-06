@@ -55,11 +55,21 @@ const RoomProfile &get_room_profile(int index) {
 }
 
 // Encode an adjusted Fahrenheit temperature (from get_compensated_temp) into
-// a Midea "Follow Me" IR payload. Replace this function to support other
-// mini-split models/protocols.
+// a Midea "Follow Me" IR payload (supports both Fahrenheit and Celsius frames).
+// Replace this function to support other mini-split models/protocols.
 // ref:
 // https://github.com/esphome/feature-requests/issues/1627#issuecomment-1365639966
-std::vector<uint8_t> midea_follow_me_code(float adjusted_temp_f) {
+std::vector<uint8_t> midea_follow_me_code(float adjusted_temp_f,
+                                          bool use_fahrenheit = true) {
+  if (!use_fahrenheit) {
+    int t_c = (int)roundf(f_to_c(adjusted_temp_f));
+    if (t_c < 0)
+      t_c = 0;
+    if (t_c > 37)
+      t_c = 37;
+    ESP_LOGI("follow.me", "Follow Me: sending %d°C", t_c);
+    return {0xA4, 0xA3, 0x6B, 0x00, (uint8_t)(t_c + 1)};
+  }
   int t = (int)roundf(adjusted_temp_f);
   if (t < 32)
     t = 32;
