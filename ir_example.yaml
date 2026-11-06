@@ -1,0 +1,10 @@
+substitutions:
+  name: ir-example
+  friendly_name: Example Room IR
+  temperature_sensor: sensor.example_room_temperature
+  # Optional: override the Follow Me transmission interval (default: "10s")
+  # follow_me_interval: "10s"
+
+packages:
+  common: !include common/ir_thermostat.yaml
+
