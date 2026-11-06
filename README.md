@@ -19,6 +19,9 @@ An ESPHome package for controlling Midea/Coolix-compatible mini-split heat pumps
 ├── common/
 │   ├── ir_thermostat.yaml   # Reusable ESPHome package definition
 │   └── ir_thermostat.h      # Follow Me smoothing & IR payload encoding
+├── components/
+│   └── ir_thermostat/
+│       └── __init__.py      # External component loader that bundles ir_thermostat.h
 ├── ir_example.yaml          # Example per-room device configuration
 ├── secrets.yaml.example     # Template for local secrets.yaml
 └── .gitignore

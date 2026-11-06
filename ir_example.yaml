@@ -4,6 +4,8 @@ substitutions:
   temperature_sensor: sensor.example_room_temperature
   # Optional: override the Follow Me transmission interval (default: "10s")
   # follow_me_interval: "10s"
+  # Optional: use local components/ folder when developing locally instead of fetching from GitHub
+  # external_components_source: components
 
 packages:
   common: !include common/ir_thermostat.yaml
