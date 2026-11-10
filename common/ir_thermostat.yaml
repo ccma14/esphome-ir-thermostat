@@ -106,7 +106,7 @@ sensor:
     name: "Thermostat"
     entity_id: ${temperature_sensor}
     id: ha_temperature_sensor
-    unit_of_measurement: ${ "°F" if (use_fahrenheit | string | lower == "true") else "°C" }
+    unit_of_measurement: "°C"  # Post-filter state is always in Celsius for ESPHome climate
     accuracy_decimals: 1
     internal: True
     filters:
